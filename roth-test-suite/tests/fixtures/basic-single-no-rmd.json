@@ -1,0 +1,11 @@
+{
+  "status": "single", "startYear": 2026, "endAge": 70,
+  "magiPrev1": 0, "magiPrev2": 0,
+  "spouses": [
+    { "name": "A", "by": 1961, "deathAge": null, "ss": 0, "ssAge": 62, "pen": 0, "oth": 0, "othEnd": 0, "trad": 500000 }
+  ],
+  "roth": 0, "taxable": 500000,
+  "gTrad": 0, "gRoth": 0, "gTax": 0, "yTax": 0,
+  "infl": 0, "cola": 0, "stateRate": 0, "heir": 0, "disc": 0, "penSurv": 0.5,
+  "convStart": 2026, "convEnd": 2026, "fixedAmt": 0, "_noSens": true
+}

@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TRS Roth Conversion Optimizer</title>
+<style>
+:root{
+  --ink:#182A3A; --slate:#4A5D6E; --line:#D8DFE4; --paper:#F7F9FA; --card:#FFFFFF;
+  --conv:#2E7D5B; --conv-soft:#DCEDE4; --cliff:#B7791F; --cliff-soft:#F6EBD6;
+  --base-bar:#3E5871; --head-bar:#E4EAEE; --neg:#A33B3B; --focus:#2E7D5B;
+}
+*{box-sizing:border-box}
+html{font-size:15px}
+body{margin:0;background:var(--paper);color:var(--ink);
+  font-family:"Segoe UI",Avenir,"Helvetica Neue",Arial,sans-serif;line-height:1.45}
+h1,h2,h3{font-family:Georgia,"Times New Roman",serif;font-weight:600;letter-spacing:.01em}
+.wrap{max-width:1180px;margin:0 auto;padding:0 20px 80px}
+header.app{background:var(--ink);color:#fff;padding:22px 0 18px;margin-bottom:26px}
+header.app h1{margin:0;font-size:1.5rem;color:#fff}
+header.app .sub{color:#B8C6D1;font-size:.85rem;margin-top:4px}
+header.app .ver{float:right;font-size:.72rem;color:#8FA3B3;border:1px solid #3A5064;border-radius:3px;padding:2px 8px;margin-top:4px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:6px;padding:18px 20px;margin-bottom:18px}
+.card h2{margin:0 0 4px;font-size:1.05rem}
+.card .hint{color:var(--slate);font-size:.8rem;margin:0 0 12px}
+.grid{display:grid;gap:12px 18px}
+.g4{grid-template-columns:repeat(4,1fr)} .g3{grid-template-columns:repeat(3,1fr)} .g6{grid-template-columns:repeat(6,1fr)} .g2{grid-template-columns:1fr 1fr}
+@media(max-width:900px){.g4,.g6{grid-template-columns:repeat(2,1fr)}.g3{grid-template-columns:1fr 1fr}.g2{grid-template-columns:1fr}}
+label{display:block;font-size:.72rem;text-transform:uppercase;letter-spacing:.05em;color:var(--slate);margin-bottom:3px}
+input,select{width:100%;padding:7px 9px;border:1px solid var(--line);border-radius:4px;font-size:.92rem;background:#fff;color:var(--ink)}
+input:focus,select:focus,button:focus,summary:focus{outline:2px solid var(--focus);outline-offset:1px}
+input[type=checkbox]{width:auto}
+.spouse-col{border:1px solid var(--line);border-radius:6px;padding:14px;background:#FBFCFC}
+.spouse-col h3{margin:0 0 10px;font-size:.92rem;color:var(--slate)}
+.btn{background:var(--ink);color:#fff;border:none;border-radius:5px;padding:11px 26px;font-size:1rem;cursor:pointer;font-family:inherit}
+.btn:hover{background:#24405A}
+.btn.secondary{background:#fff;color:var(--ink);border:1px solid var(--ink);padding:8px 16px;font-size:.85rem}
+.btn.secondary:hover{background:#EEF2F4}
+.runrow{display:flex;gap:12px;align-items:center;margin:14px 0 4px;flex-wrap:wrap}
+#status{font-size:.85rem;color:var(--slate)}
+table{border-collapse:collapse;width:100%;font-size:.84rem}
+th{font-size:.7rem;text-transform:uppercase;letter-spacing:.05em;color:var(--slate);font-weight:600;text-align:right;padding:6px 8px;border-bottom:2px solid var(--ink);white-space:nowrap}
+th:first-child,td:first-child{text-align:left}
+td{padding:6px 8px;border-bottom:1px solid var(--line);text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+tr.sel{background:var(--conv-soft)}
+tr.click{cursor:pointer} tr.click:hover{background:#EFF4F1}
+.pos{color:var(--conv);font-weight:600}.negv{color:var(--neg);font-weight:600}
+.answer{border-left:5px solid var(--conv);background:linear-gradient(90deg,#F2F8F4,#fff 60%)}
+.answer .big{font-size:1.7rem;font-family:Georgia,serif;color:var(--conv)}
+.answer .plansent{font-size:1.05rem;margin:8px 0 2px}
+.pill{display:inline-block;font-size:.7rem;padding:2px 9px;border-radius:10px;background:var(--conv-soft);color:var(--conv);font-weight:600;letter-spacing:.03em}
+.pill.amber{background:var(--cliff-soft);color:var(--cliff)}
+.pill.red{background:#F4DEDE;color:var(--neg)}
+.toggle{display:inline-flex;border:1px solid var(--ink);border-radius:5px;overflow:hidden;font-size:.8rem}
+.toggle button{border:none;background:#fff;color:var(--ink);padding:6px 14px;cursor:pointer;font-family:inherit}
+.toggle button.on{background:var(--ink);color:#fff}
+.flex{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.spacer{flex:1}
+.callout{border:1px solid var(--cliff);background:var(--cliff-soft);border-radius:6px;padding:12px 15px;font-size:.86rem;margin-top:12px}
+.callout b{color:var(--cliff)}
+.note{font-size:.76rem;color:var(--slate)}
+.sens{font-size:.83rem;color:var(--slate);margin-top:10px;border-top:1px dashed var(--line);padding-top:9px}
+.legend{display:flex;gap:16px;font-size:.75rem;color:var(--slate);margin:8px 0}
+.sw{display:inline-block;width:11px;height:11px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+#chartbox{overflow-x:auto}
+details{margin-top:10px}
+details.section{border:1px solid var(--line);border-radius:6px;padding:10px 14px;background:#FBFCFC}
+summary{cursor:pointer;font-size:.85rem;color:var(--slate);font-weight:600}
+summary .chip{font-weight:400;color:var(--slate);font-size:.78rem;margin-left:8px}
+details[open] > summary{margin-bottom:10px}
+/* featured comparison grid: strategies as columns */
+.cmpgrid{display:grid;gap:0;overflow-x:auto;border:1px solid var(--line);border-radius:6px}
+.cmpgrid .cg{padding:8px 12px;border-bottom:1px solid var(--line);font-size:.85rem;text-align:right;font-variant-numeric:tabular-nums;background:#fff}
+.cmpgrid .cg.rowlab{text-align:left;color:var(--slate);font-size:.78rem;background:#FBFCFC}
+.cmpgrid .cg.head{font-weight:600;font-size:.8rem;text-align:right;background:var(--ink);color:#fff;border-bottom:2px solid var(--ink)}
+.cmpgrid .cg.head.rowlab{background:var(--ink);color:#8FA3B3}
+.cmpgrid .cg.win{background:var(--conv-soft)}
+.builder{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+.builder .by{display:flex;flex-direction:column;gap:3px;font-size:.72rem;color:var(--slate)}
+.builder select{font-size:.78rem;padding:4px 5px;max-width:150px}
+.footer-note{font-size:.72rem;color:var(--slate)}
+#results{display:none}
+#clientDoc{display:none}
+@media print{
+  body *{visibility:hidden}
+  #clientDoc,#clientDoc *{visibility:visible}
+  #clientDoc{display:block;position:absolute;left:0;top:0;width:100%;background:#fff;color:#111;
+    font-family:Georgia,"Times New Roman",serif;font-size:11pt;padding:0 .25in}
+  #clientDoc .bar{background:#182A3A !important;color:#fff;padding:16pt 20pt;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  #clientDoc h1{color:#fff;margin:0;font-size:17pt}
+  #clientDoc .bar .sub{color:#B8C6D1;font-size:9pt;margin-top:3pt}
+  #clientDoc h2{font-size:13pt;border-bottom:1.5pt solid #182A3A;padding-bottom:3pt;margin:18pt 0 8pt}
+  #clientDoc table{font-size:9.5pt;width:100%;border-collapse:collapse}
+  #clientDoc th{border-bottom:1.2pt solid #182A3A;text-align:right;padding:4pt 6pt;font-size:8pt;text-transform:uppercase;letter-spacing:.04em}
+  #clientDoc td{border-bottom:.6pt solid #C8CFD4;text-align:right;padding:4pt 6pt}
+  #clientDoc th:first-child,#clientDoc td:first-child{text-align:left}
+  #clientDoc ul{margin:4pt 0;padding-left:16pt}
+  #clientDoc li{margin-bottom:2pt;font-size:9.5pt}
+  #clientDoc .disc{font-size:7.5pt;color:#444;line-height:1.35;margin-top:14pt;border-top:.75pt solid #999;padding-top:6pt}
+  #clientDoc .kpi{font-size:15pt;color:#2E7D5B;font-weight:700}
+  #clientDoc .draftmark{position:fixed;top:42%;left:2%;right:2%;text-align:center;font-size:38pt;font-weight:700;
+    color:rgba(178,44,44,.26);transform:rotate(-22deg);letter-spacing:.06em;z-index:99;font-family:Arial,sans-serif}
+  .pgbrk{page-break-before:always}
+}
+</style>
+</head>
+<body>
+<header class="app"><div class="wrap">
+  <span class="ver" id="verTag"></span>
+  <h1>Roth Conversion Optimizer</h1>
+  <div class="sub">Multi-year conversion strategy · bracket &amp; IRMAA aware · The Retirement Solution — internal advisor tool</div>
+</div></header>
+<div class="wrap">
+<!-- ===== 1. INPUTS ===== -->
+<div class="card">
+  <h2>Client inputs</h2>
+  <p class="hint">Eight fields to a first answer. Income details and assumptions are pre-filled below — open them only if something needs changing.</p>
+  <div class="grid g4" style="margin-bottom:14px">
+    <div><label>Household type</label><select id="hhType"><option value="mfj">Married filing jointly</option><option value="single">Single</option></select></div>
+    <div><label>Roth balance ($)</label><input type="number" id="roth" value="150000"></div>
+    <div><label>Taxable balance ($)</label><input type="number" id="taxable" value="400000"></div>
+    <div><label style="visibility:hidden">.</label><span class="note">Balances as of today.</span></div>
+  </div>
+  <div class="grid g2" id="spouseGrid">
+    <div class="spouse-col">
+      <h3>Spouse 1</h3>
+      <div class="grid g3">
+        <div><label>Name</label><input id="s1name" value="Client A"></div>
+        <div><label>Birth year</label><input type="number" id="s1by" value="1962"></div>
+        <div><label>Trad IRA / 401k ($)</label><input type="number" id="s1trad" value="1400000"></div>
+        <div style="grid-column:span 2"><label>SS benefit ($/yr, today's $)</label><input type="number" id="s1ss" value="42000"></div>
+      </div>
+    </div>
+    <div class="spouse-col" id="s2col">
+      <h3>Spouse 2</h3>
+      <div class="grid g3">
+        <div><label>Name</label><input id="s2name" value="Client B"></div>
+        <div><label>Birth year</label><input type="number" id="s2by" value="1964"></div>
+        <div><label>Trad IRA / 401k ($)</label><input type="number" id="s2trad" value="600000"></div>
+        <div style="grid-column:span 2"><label>SS benefit ($/yr, today's $)</label><input type="number" id="s2ss" value="30000"></div>
+      </div>
+    </div>
+  </div>
+
+  <details class="section"><summary>Income details <span class="chip" id="incChip"></span></summary>
+    <div class="grid g4">
+      <div><label>S1 SS claiming age</label><input type="number" id="s1ssage" value="67"></div>
+      <div><label>S1 pension ($/yr)</label><input type="number" id="s1pen" value="24000"></div>
+      <div><label>S1 other income ($/yr)</label><input type="number" id="s1oth" value="0"></div>
+      <div><label>S1 other income ends at age</label><input type="number" id="s1othend" value="65"></div>
+      <div><label>S2 SS claiming age</label><input type="number" id="s2ssage" value="67"></div>
+      <div><label>S2 pension ($/yr)</label><input type="number" id="s2pen" value="0"></div>
+      <div><label>S2 other income ($/yr)</label><input type="number" id="s2oth" value="0"></div>
+      <div><label>S2 other income ends at age</label><input type="number" id="s2othend" value="65"></div>
+      <div><label>MAGI two years ago ($)</label><input type="number" id="magiPrev2" placeholder="optional — drives yr-1 IRMAA"></div>
+      <div><label>MAGI last year ($)</label><input type="number" id="magiPrev1" placeholder="optional — drives yr-2 IRMAA"></div>
+      <div style="grid-column:1/-1;border-top:1px solid var(--line,#ddd);margin:4px 0 0;padding-top:8px">
+        <label>Annual tax-exempt interest / IRMAA MAGI add-back ($/yr)</label>
+        <input type="number" id="taxExemptInterest" value="0" placeholder="0">
+        <div class="hint" style="font-size:.78rem;margin-top:3px">Used in projected years for IRMAA and Social Security provisional income. Does not increase taxable income.</div>
+      </div>
+      <div><label>Pension survivor %</label><input type="number" step="5" id="penSurv" value="50"></div>
+    </div>
+    <div style="margin-top:12px">
+      <label style="text-transform:none;letter-spacing:0;font-size:.85rem;display:flex;gap:7px;align-items:center;color:var(--ink)">
+        <input type="checkbox" id="survToggle"> Model a survivor scenario (widow's penalty)</label>
+      <div class="grid g4" id="survFields" style="display:none;margin-top:10px">
+        <div><label>S1 modeled death at age</label><input type="number" id="s1death" placeholder="blank = survives"></div>
+        <div><label>S2 modeled death at age</label><input type="number" id="s2death" placeholder="blank = survives"></div>
+      </div>
+    </div>
+  </details>
+
+  <details class="section"><summary>Assumptions <span class="chip" id="assumpChip"></span></summary>
+    <div class="grid g6">
+      <div><label>Trad growth %</label><input type="number" step="0.1" id="gTrad" value="5.5"></div>
+      <div><label>Roth growth %</label><input type="number" step="0.1" id="gRoth" value="5.5"></div>
+      <div><label>Taxable growth %</label><input type="number" step="0.1" id="gTax" value="5.5"></div>
+      <div><label>Taxable yield % (div, taxed yearly)</label><input type="number" step="0.1" id="yTax" value="2.0"></div>
+      <div><label>Inflation %</label><input type="number" step="0.1" id="infl" value="2.5"></div>
+      <div><label>SS COLA %</label><input type="number" step="0.1" id="cola" value="2.3"></div>
+      <div><label>State tax % (rough flat estimate)</label><input type="number" step="0.1" id="state" value="0"></div>
+      <div><label>Heir marginal rate %</label><input type="number" step="1" id="heir" value="22"></div>
+      <div><label>Discount rate % (today's $)</label><input type="number" step="0.1" id="disc" value="3.0"></div>
+      <div><label>Projection end age</label><input type="number" id="endAge" value="95"></div>
+    </div>
+    <p class="note" style="margin-top:10px">Growth defaults are equalized across account types so Roth gets no hidden structural edge — taxable drag is modeled explicitly through annual taxation of the dividend yield, and does not model embedded-gain liquidation.</p>
+  </details>
+</div>
+
+<!-- ===== 2. STRATEGY SETTINGS ===== -->
+<div class="card">
+  <h2>What should the model solve for?</h2>
+  <div class="grid g4">
+    <div><label>Objective</label><select id="objective">
+      <option value="termWealth">Max terminal after-tax wealth</option>
+      <option value="minTaxPV">Min lifetime client tax (today's $)</option>
+      <option value="minTotalPV">Min total tax incl. heirs (today's $)</option>
+    </select></div>
+    <div><label>First conversion year</label><input type="number" id="convStart" value="2026"></div>
+    <div><label>Last conversion year</label><input type="number" id="convEnd" value="2033"></div>
+    <div><label>Fixed-amount strategy ($/yr, optional)</label><input type="number" id="fixedAmt" placeholder="optional"></div>
+  </div>
+  <div style="margin-top:12px">
+    <label style="text-transform:none;letter-spacing:0;font-size:.85rem;display:flex;gap:7px;align-items:center;color:var(--ink)">
+      <input type="checkbox" id="allowForced"> Allow forced Roth/pre-tax draws when taxes exceed taxable assets + conversion (otherwise those strategies are disqualified)</label>
+  </div>
+  <p class="note" style="margin-top:10px">Search: tops of the 12/22/24/32% brackets, IRMAA tiers 1–5, NIIT threshold, preserve-RMD and empty-by strategies — every window in range, then year-by-year refinement. A heuristic search, not a proof of optimality; the winner is ranked only by the objective above.</p>
+  <div class="runrow">
+    <button class="btn" id="runBtn">Run optimizer</button>
+    <button class="btn secondary" id="saveBtn">Save scenario</button>
+    <button class="btn secondary" id="loadBtn">Load scenario</button>
+    <input type="file" id="loadFile" accept=".json" style="display:none">
+    <span id="status"></span>
+  </div>
+</div>
+
+<div id="results">
+<!-- ===== 3. ANSWER ===== -->
+<div class="card answer" id="answerCard"></div>
+
+<!-- ===== 4. COMPARISON ===== -->
+<div class="card">
+  <div class="flex">
+    <h2 style="margin:0">How the strategies compare</h2>
+    <div class="spacer"></div>
+    <div class="toggle" role="group" aria-label="Dollar mode">
+      <button id="modePV" class="on">Today's $</button><button id="modeNom">Nominal $</button>
+    </div>
+    <button class="btn secondary" id="printBtn">Client PDF</button>
+  </div>
+  <p class="hint" style="margin-top:8px">Wealth figures are after-tax (pre-tax balances haircut at the heir rate). Tax figures include federal, state, NIIT, IRMAA surcharges and heirs' tax.</p>
+  <div class="cmpgrid" id="featGrid"></div>
+  <details><summary>Show all strategies</summary>
+    <div style="overflow-x:auto;margin-top:8px"><table id="cmpTable"></table></div>
+  </details>
+</div>
+
+<!-- ===== 5. AUDIT TRAIL ===== -->
+<div class="card">
+  <details id="auditWrap"><summary>Audit trail — chart, plan editor &amp; year-by-year detail</summary>
+    <h3 id="detailTitle" style="font-size:.95rem"></h3>
+    <div class="legend">
+      <span><span class="sw" style="background:var(--base-bar)"></span>Income before conversion (MAGI)</span>
+      <span><span class="sw" style="background:var(--conv)"></span>Roth conversion</span>
+      <span><span class="sw" style="background:var(--head-bar)"></span>Headroom to next cliff</span>
+      <span><span class="sw" style="background:var(--cliff);height:3px;width:14px"></span>Next threshold (bracket / IRMAA / NIIT)</span>
+    </div>
+    <div id="chartbox"></div>
+    <div id="builderBox"></div>
+    <div id="widowBox"></div>
+    <div style="overflow-x:auto;margin-top:10px"><table id="detTable"></table></div>
+    <p class="note" style="margin-top:8px">Highest bkt = statutory bracket on the last converted dollar. Avg rate = total fed+state cost of the conversion ÷ conversion. Last $10k = the edge cost of converting a little more — the planner's trim/extend signal. IRMAA cost created = the surcharge this year's income triggers two years out. ⚠ = taxable account exhausted that year.</p>
+  </details>
+</div>
+
+<!-- ===== 6. COMPLIANCE ===== -->
+<div class="card">
+  <details><summary>Model limitations &amp; compliance status <span class="chip" id="compChip"></span></summary>
+    <ul class="note" style="margin:6px 0 2px;padding-left:18px;line-height:1.7">
+      <li>Strategy search is heuristic; results are the best modeled strategy under the tested targets and assumptions, not a mathematically proven optimum.</li>
+      <li>Future-year brackets, deductions and IRMAA tiers/surcharges are approximated by indexing the current-year tables at your inflation input (top IRMAA tier held frozen until 2028 per statute); actual figures are set annually by the IRS and CMS.</li>
+      <li>Results are sensitive to return assumptions. Taxable drag is approximated through annual taxation of qualified dividends and does not model embedded-gain liquidation — results may overstate after-tax wealth where liquidation would realize gains.</li>
+      <li>State tax is a rough flat haircut on federal taxable income — it does not reflect state-specific treatment of Social Security, pensions, IRA distributions or capital gains.</li>
+      <li>Preserve-RMD strategies are anchored to the first RMD year; later RMDs drift above the chosen bracket as the IRS life-expectancy divisor shrinks.</li>
+      <li>Taxes are paid from taxable assets; shortfalls beyond the conversion disqualify a strategy unless forced draws are explicitly allowed, and forced draws are modeled without gross-up.</li>
+      <li>Survivor modeling is simplified: no qualifying-surviving-spouse filing status, survivor-benefit claiming rules, IRMAA life-changing-event appeals, remarriage, QCDs, or itemized/charitable strategies.</li>
+      <li>Death-year RMD handling assumes any required final-year RMD was satisfied before the survivor transition. Additional beneficiary-RMD timing is not modeled in client-facing output.</li>
+      <li>This is a planning projection, not a tax return calculation. Conversions require CPA review before execution.</li>
+    </ul>
+  </details>
+  <div class="footer-note" id="assumpNote" style="margin-top:10px"></div>
+</div>
+</div><!-- /results -->
+
+<div id="clientDoc"></div>
+</div><!-- /wrap -->
+<script type="module">
+/* ================= TAX CONSTANTS — version-dated, update annually =================
+   Source year: 2026 (post-OBBBA; TCJA rate structure permanent).
+   indexed:true  -> grown by the inflation input from BASE_YEAR forward
+   indexed:false -> frozen by statute (SS thresholds, NIIT, senior-bonus phaseout)
+   VERIFY against current IRS Rev. Proc. and CMS IRMAA notice each January.       */
+/* ============================ CHANGELOG ============================
+   v2026.4 (2026-07-09) — UX/governance release.
+     Equalized growth defaults (5.5/5.5/5.5, taxable drag modeled via 2% dividend
+     yield only); last-$10k marginal column; growth +/-1% sensitivity + drag-flip
+     check; Preserve 12%/22% RMD-capacity strategies; PV-first display; three
+     PV-consistent objectives; six-section UX; editable plan builder; scenario
+     save/load; PDF input echo; embedded runSelfTests(). Driven by planner &
+     compliance reviews (bracket-arbitrage critique; number-density critique).
+   v2026.3 — tier-5 target; chart/engine cliff parity; rate validation;
+     unpaid-tax disqualification + override; DRAFT watermark until signoff.
+   v2026.2 — CMS-verified IRMAA tables; heuristic labeling; objective selector;
+     validation; limitations box; regression suite; sourced constants.
+   v2026.1 — initial two-spouse engine.
+   Editing this file? Run runSelfTests() in the browser console afterward.
+   =================================================================== */
+/* Engine is imported from the extracted, tested modules under ./engine/.
+   The inline copy was removed so the UI and the test suite share ONE calculation
+   source and cannot drift. See engine/ and tests/. */
+import { TT, computeYear, simulate, optimize, constPolicy, amtPolicy,
+         irmaaTier, irmaaThreshAt, irmaaAnnualPerPerson, bracketTax, ltcgTax,
+         ordRateAt, inflF, rmdAge, ultAt, nextCliff, validate,
+         TARGETS, targetById, levelEmptyBy, condensePlan, dominantId,
+         preserveBracket, OBJECTIVES,
+         FIELD_IDS, CHECK_IDS, fieldsToModel, serializeScenario, deserializeScenario } from './engine/index.js';
+/* ================= UI LAYER ================= */
+const fmt$ = v => (v<0?'-$':'$') + Math.round(Math.abs(v)).toLocaleString();
+const fmtPct = v => (v*100).toFixed(1)+'%';
+let RESULT=null, MODE='pv', SELECTED=null, MODEL=null, CUSTOMSIM=null;
+const mv = o => MODE==='nom' ? o.nom : o.pv;
+
+// FIELD_IDS / CHECK_IDS are imported from ./engine/scenario.js (single source of truth
+// shared with save/load and the round-trip test).
+
+
+function readModel(){
+  // Thin DOM collector: gather raw field/check values, then delegate all model
+  // construction to the DOM-free fieldsToModel() so the logic stays testable.
+  const g = id => document.getElementById(id);
+  const fields = {}; FIELD_IDS.forEach(id => { const el=g(id); if(el) fields[id]=el.value; });
+  const checks = {}; CHECK_IDS.forEach(id => { const el=g(id); if(el) checks[id]=el.checked; });
+  return fieldsToModel(fields, checks);
+}
+function annotateVs(baseline, st){
+  st.breakEven=null;
+  for(const r of st.rows){ const b=baseline.rows.find(x=>x.y===r.y);
+    if(b && r.wealth>=b.wealth && r.y>baseline.rows[0].y){ st.breakEven=r.y; break; } }
+  st.savings={nom:baseline.total.nom-st.total.nom, pv:baseline.total.pv-st.total.pv};
+  st.dTerm={nom:st.terminal.nom-baseline.terminal.nom, pv:st.terminal.pv-baseline.terminal.pv};
+  return st;
+}
+function run(){
+  const st=document.getElementById('status');
+  st.textContent='Running grid search, refinement & sensitivity\u2026';
+  document.getElementById('runBtn').disabled=true;
+  setTimeout(()=>{
+    try{
+      MODEL = readModel(); CUSTOMSIM=null;
+      const v = validate(MODEL);
+      if(v.errors.length){ st.textContent='Fix inputs: '+v.errors.join(' '); return; }
+      const t0=performance.now();
+      RESULT = optimize(MODEL);
+      SELECTED = RESULT.refined;
+      st.textContent = RESULT.strategies.length+' strategies \u00b7 '+((performance.now()-t0)/1000).toFixed(1)+'s'
+        + (v.warns.length ? ' \u00b7 Note: '+v.warns.join(' ') : '');
+      document.getElementById('results').style.display='block';
+      renderAll();
+      document.getElementById('answerCard').scrollIntoView({behavior:'smooth'});
+    } finally { document.getElementById('runBtn').disabled=false; }
+  }, 30);
+}
+function renderAll(){ renderAnswer(); renderFeatured(); renderFullTable(); renderAudit(); renderAssump(); buildClientDoc(); }
+
+/* ---------- 3. Answer ---------- */
+function renderAnswer(){
+  const w=RESULT.refined, b=RESULT.baseline, S=RESULT.sensitivity;
+  const obj=(OBJECTIVES[MODEL.objective]||OBJECTIVES.termWealth).label;
+  const yrs = w.rows.filter(r=>r.conv>0).length;
+  const avg = yrs? w.convTot/yrs : 0;
+  const unpaidYears = w.rows.filter(r=>r.unpaid>0);
+  const liq = unpaidYears.length
+    ? `<div class="callout"><b>Liquidity ${w.failed?'failure (shown because forced draws are allowed)':'warning'}:</b> in ${unpaidYears.map(r=>r.y).join(', ')} taxes exceed the taxable account and the conversion \u2014 modeled approximately as Roth/pre-tax draws without gross-up. Requires real liquidity planning or smaller conversions.</div>` : '';
+  const arb = (w.convMarg!=null && b.rmdMarg!=null)
+    ? ` Conversions cost a blended <b>${fmtPct(w.convMarg)}</b> vs. an average <b>${fmtPct(b.rmdMarg)}</b> on the RMDs they replace.` : '';
+  const sens = S ? `<div class="sens"><b>Sensitivity:</b> a \u00b11% change in growth assumptions moves the added wealth between ${fmt$(S.dLo)} and ${fmt$(S.dHi)} (today's $). ${S.flip.text}</div>` : '';
+  document.getElementById('answerCard').innerHTML = `
+    <span class="pill">Best modeled strategy found</span> <span class="pill amber">Ranked by: ${obj}</span>
+    ${w.failed?'<span class="pill red">liquidity fail</span>':''}
+    <div class="plansent"><b>${condensePlan(w.policy, MODEL)}</b>${yrs?` \u2014 about ${fmt$(avg)} per year over ${yrs} year${yrs>1?'s':''} (${fmt$(w.convTot)} total).`:''}</div>
+    <div class="note" style="margin-bottom:12px">Heuristic search result under the stated assumptions, not a proven optimum. Requires CPA review before execution.</div>
+    <div class="flex" style="gap:34px">
+      <div><div class="big">${fmt$(mv(w.dTerm))}</div><div class="note">added after-tax wealth at ${MODEL.endAge} vs. doing nothing (${MODE==='pv'?"today's $":'nominal'})</div></div>
+      <div><div class="big" style="color:var(--ink)">${fmt$(mv(w.savings))}</div><div class="note">total tax saved incl. IRMAA &amp; heirs' tax</div></div>
+      <div><div class="big" style="color:var(--ink)">${w.breakEven??'\u2014'}</div><div class="note">pulls ahead of doing nothing by</div></div>
+    </div>
+    <p style="font-size:.87rem;margin-bottom:0">${arb}</p>${liq}${sens}`;
+}
+
+/* ---------- 4. Comparison ---------- */
+function featuredCols(){
+  const b=RESULT.baseline, w=RESULT.refined, S=RESULT.strategies;
+  const cons = S.find(s=>/Preserve 12%/.test(s.policy.name) && !s.failed)
+            || S.find(s=>/Fill 12%/.test(s.policy.name) && !s.failed);
+  const agg = S.filter(s=>!s.failed && s!==w && s!==b && s!==cons && s.convTot>0)
+               .sort((a,c)=>c.convTot-a.convTot)[0];
+  let cols=[{t:'Do nothing',s:b},{t:'Conservative',s:cons},{t:'\u2605 Best modeled',s:w},{t:'Aggressive',s:agg}]
+    .filter(c=>c.s);
+  cols = cols.filter((c,i)=>cols.findIndex(x=>x.s.policy.name===c.s.policy.name)===i);
+  if(CUSTOMSIM) cols.push({t:'Your edited plan', s:CUSTOMSIM});
+  return cols;
+}
+function renderFeatured(){
+  const cols = featuredCols();
+  const rows = [
+    ['Strategy', s=>s.policy.name],
+    ['Total converted', s=>s.convTot?fmt$(s.convTot):'\u2014'],
+    ['Highest bracket reached', s=>{ const m=Math.max(0,...s.rows.map(r=>r.topRate||0)); return m?(m*100).toFixed(0)+'%':'\u2014'; }],
+    ['Avg rate paid on conversions', s=>s.convMarg!=null?fmtPct(s.convMarg):'\u2014'],
+    ['Lifetime tax + IRMAA', s=>fmt$(mv(s.tax)+mv(s.irm))],
+    ["Heirs' tax on what's left", s=>fmt$(mv(s.heir))],
+    ['Wealth at age '+MODEL.endAge, s=>fmt$(mv(s.terminal))],
+    ['Added wealth vs. doing nothing', s=>{ const d=mv(s.dTerm); return `<span class="${d>0?'pos':d<0?'negv':''}">${fmt$(d)}</span>`; }],
+    ['Total tax saved', s=>{ const d=mv(s.savings); return `<span class="${d>0?'pos':d<0?'negv':''}">${fmt$(d)}</span>`; }],
+    ['Pays off by', s=>s.breakEven??'\u2014'],
+    ['Executable?', s=>s.failed?'<span class="pill red">No \u2014 liquidity</span>':'<span class="pill">Yes</span>']
+  ];
+  const grid = document.getElementById('featGrid');
+  grid.style.gridTemplateColumns = '210px repeat('+cols.length+', minmax(150px,1fr))';
+  let html = '<div class="cg head rowlab">&nbsp;</div>' + cols.map(c=>`<div class="cg head${c.s.isWinner?' ':''}">${c.t}</div>`).join('');
+  rows.forEach(([lab,f])=>{
+    html += `<div class="cg rowlab">${lab}</div>` + cols.map(c=>`<div class="cg${c.s.isWinner?' win':''}">${f(c.s)}</div>`).join('');
+  });
+  grid.innerHTML = html;
+}
+function renderFullTable(){
+  const sorted = [...RESULT.strategies];
+  const rows = sorted.map((s)=>{
+    const i = RESULT.strategies.indexOf(s);
+    const yrs = s.rows.filter(r=>r.conv>0).length;
+    const sel = s===SELECTED?' sel':'';
+    const sav = mv(s.savings), dt = mv(s.dTerm);
+    return `<tr class="click${sel}" data-i="${i}">
+      <td>${s.isWinner?'\u2605 ':''}${s.failed?'<span class="pill red">fail</span> ':''}${s.policy.name}</td><td>${yrs||'\u2014'}</td>
+      <td>${s.convTot?fmt$(s.convTot):'\u2014'}</td>
+      <td>${fmt$(mv(s.tax))}</td><td>${fmt$(mv(s.irm))}</td><td>${fmt$(mv(s.heir))}</td>
+      <td>${fmt$(mv(s.total))}</td>
+      <td class="${sav>0?'pos':sav<0?'negv':''}">${fmt$(sav)}</td>
+      <td class="${dt>0?'pos':dt<0?'negv':''}">${fmt$(dt)}</td>
+      <td>${s.breakEven??'\u2014'}</td></tr>`;
+  }).join('');
+  document.getElementById('cmpTable').innerHTML =
+   `<thead><tr><th>Strategy</th><th>Yrs conv.</th><th>Converted</th><th>Lifetime tax</th><th>IRMAA</th>
+    <th>Heirs' tax</th><th>Total tax</th><th>Tax savings</th><th>\u0394 Wealth</th><th>Pays off</th></tr></thead>
+    <tbody>${rows}</tbody>`;
+  document.querySelectorAll('#cmpTable tr.click').forEach(tr=>{
+    tr.onclick=()=>{ SELECTED=RESULT.strategies[+tr.dataset.i]; renderFullTable(); renderAudit(); };
+  });
+}
+
+/* ---------- 5. Audit trail ---------- */
+function renderAudit(){
+  const s=SELECTED;
+  document.getElementById('detailTitle').textContent = 'Showing: '+s.policy.name;
+  // chart
+  const rows=s.rows, H=250, BW=22, GAP=7, PADL=56;
+  const cliffs = rows.map(r=>nextCliff(r.magi, r.y, r.status, r.n65, MODEL.infl));
+  const maxV = Math.max(...rows.map((r,i)=>cliffs[i].v))*1.04;
+  const W = PADL + rows.length*(BW+GAP)+10;
+  const yPix = v => H - (v/maxV)*H + 16;
+  let svg = `<svg width="${W}" height="${H+52}" role="img" aria-label="Bracket fill by year">`;
+  [.25,.5,.75,1].forEach(p=>{ const v=maxV*p;
+    svg += `<line x1="${PADL}" x2="${W}" y1="${yPix(v)}" y2="${yPix(v)}" stroke="#E6EBEE"/>` +
+           `<text x="${PADL-6}" y="${yPix(v)+4}" font-size="9" fill="#7A8B98" text-anchor="end">$${Math.round(v/1000)}k</text>`; });
+  rows.forEach((r,i)=>{
+    const x = PADL + i*(BW+GAP);
+    const yBase=yPix(r.baseMagi), yTop=yPix(r.magi), yCliff=yPix(cliffs[i].v);
+    svg += `<g><title>${r.y} (${r.status.toUpperCase()}, ages ${r.ages})
+Income MAGI before conversion: ${fmt$(r.baseMagi)}
+Conversion: ${fmt$(r.conv)}
+MAGI: ${fmt$(r.magi)}
+Next cliff: ${cliffs[i].k} at ${fmt$(cliffs[i].v)}
+Headroom left: ${fmt$(Math.max(0,cliffs[i].v-r.magi))}</title>`;
+    svg += `<rect x="${x}" y="${yCliff}" width="${BW}" height="${Math.max(0,yTop-yCliff)}" fill="var(--head-bar)"/>`;
+    if(r.conv>0) svg += `<rect x="${x}" y="${yTop}" width="${BW}" height="${Math.max(0,yBase-yTop)}" fill="var(--conv)"/>`;
+    svg += `<rect x="${x}" y="${yBase}" width="${BW}" height="${Math.max(0,H+16-yBase)}" fill="var(--base-bar)"/>`;
+    svg += `<line x1="${x-1}" x2="${x+BW+1}" y1="${yCliff}" y2="${yCliff}" stroke="var(--cliff)" stroke-width="2.5"/>`;
+    if(r.y%2===0) svg += `<text x="${x+BW/2}" y="${H+30}" font-size="9" fill="#5A6B78" text-anchor="middle">${r.y}</text>`;
+    if(r.status==='single') svg += `<text x="${x+BW/2}" y="${H+42}" font-size="8.5" fill="var(--cliff)" text-anchor="middle">S</text>`;
+    svg += `</g>`;
+  });
+  svg+='</svg>';
+  document.getElementById('chartbox').innerHTML=svg;
+  renderBuilder();
+  // widow callout
+  const wb=document.getElementById('widowBox'); wb.innerHTML='';
+  const firstSingle = MODEL.status==='mfj' ? s.rows.find(r=>r.status==='single') : null;
+  if(firstSingle){
+    const r=firstSingle;
+    const hyp = computeYear({year:r.y, status:'mfj', n65:Math.min(r.n65+1,2), ss:r.ss,
+      ordinary:r.penoth+r.rmd+r.conv, qdi:r.qdi,
+      taxExemptInterest:(MODEL.taxExemptInterest||0)*Math.pow(1+MODEL.cola, r.y-MODEL.startYear),
+      infl:MODEL.infl, stateRate:MODEL.stateRate});
+    const tierS = irmaaTier(r.magi,'single',r.y,MODEL.infl), tierM = irmaaTier(hyp.magi,'mfj',r.y,MODEL.infl);
+    wb.innerHTML = `<div class="callout"><b>Widow's penalty \u2014 ${r.y}:</b> the survivor pays ${fmt$(r.tax)} filing single on this income
+      vs. ${fmt$(hyp.tax)} if still filing jointly \u2014 <b>${fmt$(r.tax-hyp.tax)}/yr more</b> on nearly the same income,
+      and the same MAGI sits at IRMAA tier ${tierS+1||'0'} (single) vs. tier ${tierM+1||'0'} (joint).
+      Dollars converted while both spouses are alive are taxed on joint brackets instead of these.</div>`;
+  }
+  // detail table
+  const m = r => MODE==='nom'?1:r.pvF;
+  const body = s.rows.map(r=>`<tr>
+    <td>${r.y}${r.flag?' \u26a0':''}</td><td>${r.ages}</td><td>${r.status.toUpperCase()}</td>
+    <td>${fmt$(r.ss*m(r))}</td><td>${fmt$((r.penoth)*m(r))}</td>
+    <td>${r.rmd?fmt$(r.rmd*m(r)):'\u2014'}</td>
+    <td class="${r.conv?'pos':''}">${r.conv?fmt$(r.conv*m(r)):'\u2014'}</td>
+    <td>${r.topRate!=null?(r.topRate*100).toFixed(0)+'%':'\u2014'}</td>
+    <td>${r.marg!=null?fmtPct(r.marg):'\u2014'}</td>
+    <td>${r.marg10k!=null?fmtPct(r.marg10k):'\u2014'}</td>
+    <td>${fmt$(r.taxSS*m(r))}</td><td>${fmt$(r.magi*m(r))}</td>
+    <td>${fmt$(r.tax*m(r))}</td>
+    <td>${r.irm?fmt$(r.irm*m(r))+' (T'+(r.tier+1)+')':'\u2014'}</td>
+    <td>${r.irmCaused>0?fmt$(r.irmCaused)+' (T'+(r.futTier+1)+')':'\u2014'}</td>
+    <td>${fmt$(r.trad*m(r))}</td><td>${fmt$(r.roth*m(r))}</td><td>${fmt$(r.taxable*m(r))}</td>
+    </tr>`).join('');
+  document.getElementById('detTable').innerHTML =
+   `<thead><tr><th>Year</th><th>Ages</th><th>Filing</th><th>Soc. Sec.</th><th>Pension/Other</th><th>RMD</th>
+    <th>Conversion</th><th>Highest bkt</th><th>Avg rate</th><th>Last $10k</th><th>Taxable SS</th><th>MAGI</th><th>Fed+St tax</th><th>IRMAA paid</th>
+    <th>IRMAA created \u2192yr+2</th><th>Pre-tax</th><th>Roth</th><th>Taxable</th></tr></thead><tbody>${body}</tbody>`;
+}
+/* ---------- plan builder ---------- */
+function renderBuilder(){
+  const box=document.getElementById('builderBox');
+  const seed = (CUSTOMSIM && SELECTED===CUSTOMSIM) ? CUSTOMSIM.policy : RESULT.refined.policy;
+  let html = '<h3 style="font-size:.95rem;margin:16px 0 4px">Edit the plan</h3><div class="note">Pick a fill target per year \u2014 the tool re-simulates instantly and adds "Your edited plan" to the comparison.</div><div class="builder">';
+  for(let y=MODEL.convStart;y<=MODEL.convEnd;y++){
+    const cur = seed.perYear[y];
+    const curId = cur ? (cur.kind==='amt' ? 'none' : cur.id) : 'none';
+    html += `<div class="by">${y}<select data-y="${y}">`+
+      TARGETS.map(t=>`<option value="${t.id}"${t.id===curId?' selected':''}>${t.label}</option>`).join('')+
+      `</select></div>`;
+  }
+  html += '</div><div class="note" id="builderSum"></div>';
+  box.innerHTML=html;
+  box.querySelectorAll('select').forEach(sel=> sel.onchange = onPlanEdit);
+}
+function onPlanEdit(){
+  const perYear={};
+  document.querySelectorAll('#builderBox select').forEach(sel=>{
+    if(sel.value!=='none') perYear[+sel.dataset.y]={id:sel.value};
+  });
+  CUSTOMSIM = annotateVs(RESULT.baseline, simulate(MODEL, {name:'Your edited plan', perYear}));
+  SELECTED = CUSTOMSIM;
+  const c=CUSTOMSIM;
+  document.getElementById('builderSum').innerHTML =
+    `Your edited plan: converts <b>${fmt$(c.convTot)}</b> \u00b7 added wealth <b>${fmt$(mv(c.dTerm))}</b> \u00b7 tax saved <b>${fmt$(mv(c.savings))}</b> \u00b7 `+
+    (c.failed?'<span class="pill red">not executable \u2014 liquidity</span>':'<span class="pill">executable</span>')+
+    (mv(c.dTerm) < mv(RESULT.refined.dTerm) ? ` \u00b7 ${fmt$(mv(RESULT.refined.dTerm)-mv(c.dTerm))} behind the best modeled strategy` : ' \u00b7 matches or beats the best modeled strategy');
+  renderFeatured(); renderFullTable(); renderAudit();
+}
+/* ---------- footer, PDF, save/load, self-tests ---------- */
+function renderAssump(){
+  document.getElementById('assumpNote').textContent =
+   TT.version+' ('+TT.sources.map(x=>x.name).join('; ')+')'+(TT.review.reviewedDate?' \u00b7 signed off '+TT.review.reviewedDate+(TT.review.reviewedBy?' by '+TT.review.reviewedBy:''):' \u00b7 annual compliance signoff pending')+
+   ' \u00b7 Brackets, deductions and IRMAA tiers 1\u20134 indexed at '+(MODEL.infl*100).toFixed(1)+
+   '%/yr (top IRMAA tier frozen until 2028); future IRMAA is approximated by this indexing, not actual CMS tables. SS provisional-income thresholds, NIIT threshold and senior-bonus phaseout frozen per statute. '+
+   'IRMAA applies each MAGI two years later at that year\u2019s tiers, using the lookback year\u2019s filing status. '+
+   'Internal advisor tool \u2014 hypothetical projection, not tax advice and not a tax return calculation. Console: runSelfTests() checks engine invariants after any edit.';
+  document.getElementById('compChip').textContent = TT.version + (TT.review.reviewedDate?' \u00b7 signed off':' \u00b7 signoff pending');
+}
+function buildClientDoc(){
+  const w=RESULT.refined, b=RESULT.baseline, M=MODEL, S=RESULT.sensitivity;
+  const names = M.spouses.map(s=>s.name).join(' & ');
+  const mode = MODE==='nom'?'nominal dollars':"today's dollars (discounted at "+(M.disc*100).toFixed(1)+"%)";
+  const picks = featuredCols().map(c=>c.s);
+  const rows = picks.map(s=>`<tr><td>${s.isWinner?'\u2605 ':''}${s.policy.name}${s.failed?' (not executable)':''}</td>
+    <td>${s.convTot?fmt$(s.convTot):'\u2014'}</td><td>${fmt$(mv(s.tax)+mv(s.irm))}</td><td>${fmt$(mv(s.heir))}</td>
+    <td>${fmt$(mv(s.total))}</td><td>${fmt$(mv(s.savings))}</td><td>${fmt$(mv(s.dTerm))}</td><td>${s.breakEven??'\u2014'}</td></tr>`).join('');
+  const inputsEcho = M.spouses.map(s=>
+    s.name+': born '+s.by+', pre-tax '+fmt$(s.trad)+', SS '+fmt$(s.ss)+'/yr at '+s.ssAge+
+    (s.pen?', pension '+fmt$(s.pen)+'/yr':'')+(s.oth?', other income '+fmt$(s.oth)+'/yr to age '+s.othEnd:'')+
+    (s.deathAge!=null?', survivor scenario: modeled death at '+s.deathAge:'')
+  ).concat(['Roth '+fmt$(M.roth)+' \u00b7 Taxable '+fmt$(M.taxable)+' \u00b7 Conversion window '+M.convStart+'\u2013'+M.convEnd+' \u00b7 Objective: '+(OBJECTIVES[M.objective]||OBJECTIVES.termWealth).label])
+   .map(a=>'<li>'+a+'</li>').join('');
+  const assump = [
+    'Growth: pre-tax '+(M.gTrad*100).toFixed(1)+'%, Roth '+(M.gRoth*100).toFixed(1)+'%, taxable '+(M.gTax*100).toFixed(1)+'% with a '+(M.yTax*100).toFixed(1)+'% dividend yield taxed annually (the only modeled taxable drag; embedded-gain liquidation is not modeled)',
+    'Inflation '+(M.infl*100).toFixed(1)+'% indexes tax brackets, deductions and IRMAA tiers; Social Security taxation thresholds and NIIT threshold remain frozen under current law',
+    'Social Security COLA '+(M.cola*100).toFixed(1)+'% \u00b7 State tax '+(M.stateRate*100).toFixed(1)+'% flat (rough estimate)',
+    'Heirs assumed to pay '+(M.heir*100).toFixed(0)+'% on inherited pre-tax balances (10-year rule) \u00b7 Projection to age '+M.endAge,
+    'Conversion taxes and IRMAA surcharges paid from the taxable account; IRMAA surcharges reflect the two-year income look-back',
+    ...(M.taxExemptInterest>0 ? ['Tax-exempt interest/MAGI add-back: '+fmt$(M.taxExemptInterest)+' per year, included for IRMAA and Social Security provisional-income modeling, not federal taxable income'] : []),
+    'All figures in '+mode+' \u00b7 '+TT.version
+  ].map(a=>'<li>'+a+'</li>').join('');
+  document.getElementById('clientDoc').innerHTML = `
+    ${TT.review.reviewedDate ? '' : '<div class="draftmark">DRAFT \u2014 COMPLIANCE SIGNOFF PENDING</div>'}
+    <div class="bar"><h1>Roth Conversion Strategy Analysis</h1>
+    <div class="sub">Prepared for ${names} \u00b7 ${new Date().toLocaleDateString()} \u00b7 The Retirement Solution</div></div>
+    <h2>Modeled strategy for review</h2>
+    <p><b>${condensePlan(w.policy,M)}</b></p>
+    <p>This is the strategy identified by a modeled search under the assumptions listed below. It is presented for discussion
+    and requires CPA review before any conversion is executed. By converting during lower-income years, the strategy pre-pays tax at controlled rates instead of letting required
+    minimum distributions force the income out later at higher rates${M.spouses.some(s=>s.deathAge!=null)?' \u2014 and, in the survivor years, on single-filer brackets':''}.
+    Compared with doing nothing, it is projected to save <span class="kpi">${fmt$(mv(w.savings))}</span> in combined
+    lifetime taxes, IRMAA surcharges and heirs' taxes, adding <span class="kpi">${fmt$(mv(w.dTerm))}</span> of after-tax
+    wealth by age ${M.endAge}${w.breakEven?' (pulling ahead of the do-nothing path by '+w.breakEven+')':''}.</p>
+    ${S?'<p style="font-size:9.5pt">Sensitivity: a \u00b11% change in growth assumptions moves the projected added wealth between '+fmt$(S.dLo)+' and '+fmt$(S.dHi)+" (today's dollars). "+S.flip.text+'</p>':''}
+    <h2>How the strategies compare</h2>
+    <table><thead><tr><th>Strategy</th><th>Converted</th><th>Lifetime tax + IRMAA</th><th>Heirs' tax</th>
+    <th>Total tax</th><th>Savings</th><th>Added wealth</th><th>Pays off by</th></tr></thead><tbody>${rows}</tbody></table>
+    <h2 class="pgbrk">Inputs used</h2><ul>${inputsEcho}</ul>
+    <h2>Assumptions</h2><ul>${assump}</ul>
+    <div class="disc"><b>Important disclosures.</b> This report is a hypothetical illustration produced by The Retirement Solution, Inc.
+    for planning discussion purposes only. It is not tax, legal or investment advice, and it is not a tax return calculation.
+    The strategy shown is the best strategy found by a modeled search under the stated assumptions, not a guaranteed
+    or mathematically proven optimum. Actual conversions require review by your tax professional (CPA) before execution.
+    Projections rely on the assumptions listed above; results are sensitive to investment returns, inflation, mortality,
+    filing status and tax law assumptions, and actual outcomes will differ. Client circumstances may change. Tax parameters
+    shown are scheduled values under current law that Congress may change, and Medicare premium rules are set annually by
+    CMS and may change. Future-year tax and IRMAA figures are inflation-indexed approximations, not published tables.
+    Roth conversions are generally irrevocable. Past performance does not guarantee future results.</div>`;
+}
+function saveScenario(){
+  const fields={}, checks={};
+  FIELD_IDS.forEach(id=>{ const el=document.getElementById(id); if(el) fields[id]=el.value; });
+  CHECK_IDS.forEach(id=>{ const el=document.getElementById(id); if(el) checks[id]=el.checked; });
+  const scenario = serializeScenario(fields, checks);
+  const data = { tool:'TRS Roth Conversion Optimizer', engineVersion:TT.version,
+    reviewStatus: TT.review.reviewedDate ? ('reviewed '+TT.review.reviewedDate) : 'review pending',
+    savedAt:new Date().toISOString(), ...scenario };
+  const blob = new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'roth-scenario-'+(document.getElementById('s1name').value||'client').replace(/\W+/g,'-')+'-'+new Date().toISOString().slice(0,10)+'.json';
+  a.click(); URL.revokeObjectURL(a.href);
+}
+function loadScenario(file){
+  const rd = new FileReader();
+  rd.onload = () => {
+    try{
+      const data = JSON.parse(rd.result);
+      // deserializeScenario tolerates older (v1) files missing taxExemptInterest.
+      const { fields, checks, schemaVersion } = deserializeScenario(data);
+      Object.entries(fields).forEach(([id,v])=>{ const el=document.getElementById(id); if(el) el.value=v; });
+      Object.entries(checks).forEach(([id,v])=>{ const el=document.getElementById(id); if(el) el.checked=!!v; });
+      syncVisibility(); updateChips();
+      const note = schemaVersion<2 ? ' \u00b7 older format, tax-exempt interest defaulted to 0' : '';
+      document.getElementById('status').textContent = 'Scenario loaded ('+(data.savedAt||'').slice(0,10)+', saved under '+(data.engineVersion||data.version||'unknown version')+')'+note+'.';
+    }catch(e){ document.getElementById('status').textContent = 'Could not read that scenario file.'; }
+  };
+  rd.readAsText(file);
+}
+function runSelfTests(){
+  const t=[], ok=(n,c)=>t.push({test:n, pass:!!c});
+  ok('12% top marginal', ordRateAt(100800,'mfj',2026,.025)===.12);
+  ok('22% first dollar', ordRateAt(100801,'mfj',2026,.025)===.22);
+  const r1=computeYear({year:2026,status:'mfj',n65:0,ss:0,ordinary:120000,qdi:0,infl:.025,stateRate:0});
+  ok('TI = AGI - std ded', Math.abs(r1.ti-87800)<1);
+  ok('fed at 12% blend', Math.abs(r1.fed-10040)<1);
+  ok('IRMAA cliff 274k/274.001k', irmaaTier(274000,'mfj',2026,.025)===0 && irmaaTier(274001,'mfj',2026,.025)===1);
+  ok('top tier frozen 2027', irmaaThreshAt(4,'mfj',2027,.025)===750000);
+  ok('top tier indexed 2029', Math.abs(irmaaThreshAt(4,'mfj',2029,.025)-768750)<1);
+  const r2=computeYear({year:2026,status:'mfj',n65:2,ss:50000,ordinary:200000,qdi:0,infl:.025,stateRate:0});
+  ok('SS 85% cap', Math.abs(r2.taxSS-42500)<1);
+  const r3=computeYear({year:2026,status:'mfj',n65:0,ss:0,ordinary:245000,qdi:10000,infl:.025,stateRate:0});
+  ok('NIIT partial', r3.niit>0 && Math.abs(r3.niit-.038*Math.max(0,r3.magi-250000))<1);
+  ok('RMD ages 73/75', rmdAge(1959)===73 && rmdAge(1960)===75);
+  const M0={status:'mfj',startYear:2026,endAge:90,magiPrev1:null,magiPrev2:null,
+    spouses:[{name:'A',by:1962,deathAge:null,ss:40000,ssAge:67,pen:20000,oth:0,othEnd:65,trad:1000000},
+             {name:'B',by:1964,deathAge:null,ss:25000,ssAge:67,pen:0,oth:0,othEnd:65,trad:400000}],
+    roth:100000,taxable:300000,gTrad:.055,gRoth:.055,gTax:.055,yTax:.02,infl:.025,cola:.023,
+    stateRate:0,heir:.22,disc:.03,penSurv:.5,convStart:2026,convEnd:2030,fixedAmt:0,_noSens:true};
+  const sim=simulate(M0, constPolicy('t','i1',2026,2030));
+  let aligned=true;
+  sim.rows.forEach(r=>{ const f=sim.rows.find(x=>x.y===r.y+2); if(f && Math.abs((r.irmCaused||0)-f.irm)>1) aligned=false; });
+  ok('IRMAA caused == paid (yr+2)', aligned);
+  ok('no NaN in sim', sim.rows.every(r=>[r.tax,r.irm,r.wealth,r.trad,r.roth,r.taxable].every(isFinite)));
+  console.table(t);
+  const fails = t.filter(x=>!x.pass).length;
+  console.log(fails===0 ? 'All '+t.length+' self-tests passed.' : fails+' SELF-TEST FAILURE(S) \u2014 do not use this build.');
+  return fails===0;
+}
+/* ---------- wiring ---------- */
+function syncVisibility(){
+  document.getElementById('s2col').style.display = document.getElementById('hhType').value==='mfj'?'':'none';
+  document.getElementById('survFields').style.display = document.getElementById('survToggle').checked?'':'none';
+}
+function updateChips(){
+  const v = id => document.getElementById(id).value;
+  document.getElementById('assumpChip').textContent = v('gTrad')+'% growth \u00b7 '+v('infl')+'% inflation \u00b7 '+v('heir')+'% heir rate \u00b7 discount '+v('disc')+'%';
+  const pens = (+v('s1pen')||0)+(+v('s2pen')||0);
+  document.getElementById('incChip').textContent = (pens?fmt$(pens)+'/yr pensions \u00b7 ':'')+'claim at '+v('s1ssage')+'/'+v('s2ssage')+(document.getElementById('survToggle').checked?' \u00b7 survivor scenario on':'');
+}
+if (typeof document !== 'undefined'){
+  document.getElementById('verTag').textContent = 'Engine: ' + TT.version + (TT.review.reviewedDate ? ' \u00b7 Reviewed '+TT.review.reviewedDate : ' \u00b7 Review pending');
+  document.getElementById('runBtn').onclick = run;
+  document.getElementById('printBtn').onclick = ()=>window.print();
+  document.getElementById('saveBtn').onclick = saveScenario;
+  document.getElementById('loadBtn').onclick = ()=>document.getElementById('loadFile').click();
+  document.getElementById('loadFile').onchange = e=>{ if(e.target.files[0]) loadScenario(e.target.files[0]); e.target.value=''; };
+  document.getElementById('modeNom').onclick = ()=>{ MODE='nom'; setMode(); };
+  document.getElementById('modePV').onclick  = ()=>{ MODE='pv';  setMode(); };
+  document.getElementById('hhType').onchange = syncVisibility;
+  document.getElementById('survToggle').onchange = ()=>{ syncVisibility(); updateChips(); };
+  document.querySelectorAll('details.section input, details.section select').forEach(el=> el.addEventListener('change', updateChips));
+  function setMode(){
+    document.getElementById('modeNom').classList.toggle('on', MODE==='nom');
+    document.getElementById('modePV').classList.toggle('on', MODE==='pv');
+    if(RESULT) renderAll();
+  }
+  syncVisibility(); updateChips();
+}
+// Expose the in-browser console sanity check. This is a quick smoke test; the
+// authoritative suite is the Vitest tests under tests/ (reference/invariants/golden).
+window.runSelfTests = runSelfTests;
+
+</script>
+</body>
+</html>
