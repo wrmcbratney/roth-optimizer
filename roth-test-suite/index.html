@@ -6,9 +6,13 @@
 <title>TRS Roth Conversion Optimizer</title>
 <style>
 :root{
-  --ink:#182A3A; --slate:#4A5D6E; --line:#D8DFE4; --paper:#F7F9FA; --card:#FFFFFF;
-  --conv:#2E7D5B; --conv-soft:#DCEDE4; --cliff:#B7791F; --cliff-soft:#F6EBD6;
-  --base-bar:#3E5871; --head-bar:#E4EAEE; --neg:#A33B3B; --focus:#2E7D5B;
+  /* TRS brand tokens (from theretirementsolution.com) */
+  --trs-navy:#1b355e; --trs-navy-deep:#0f1f3d; --trs-gold:#f3c400; --trs-gold-soft:#fff1b8;
+  --trs-sage:#d0e0d7; --trs-warm-grey:#d7d2c4; --trs-cream:#faf8f4;
+  /* working tokens mapped to TRS palette */
+  --ink:#1b355e; --slate:#4A5D6E; --line:#E6E0D5; --paper:#faf8f4; --card:#FFFFFF;
+  --conv:#2f6b4f; --conv-soft:#d0e0d7; --cliff:#B8860B; --cliff-soft:#fff1b8;
+  --base-bar:#1b355e; --head-bar:#E9E6DF; --neg:#A33B3B; --focus:#2f6b4f;
 }
 *{box-sizing:border-box}
 html{font-size:15px}
@@ -590,15 +594,15 @@ function buildClientDoc(){
     <th>Total tax</th><th>Savings</th><th>Added wealth</th><th>Pays off by</th></tr></thead><tbody>${rows}</tbody></table>
     <h2 class="pgbrk">Inputs used</h2><ul>${inputsEcho}</ul>
     <h2>Assumptions</h2><ul>${assump}</ul>
-    <div class="disc"><b>Important disclosures.</b> This report is a hypothetical illustration produced by The Retirement Solution, Inc.
-    for planning discussion purposes only. It is not tax, legal or investment advice, and it is not a tax return calculation.
-    The strategy shown is the best strategy found by a modeled search under the stated assumptions, not a guaranteed
-    or mathematically proven optimum. Actual conversions require review by your tax professional (CPA) before execution.
-    Projections rely on the assumptions listed above; results are sensitive to investment returns, inflation, mortality,
-    filing status and tax law assumptions, and actual outcomes will differ. Client circumstances may change. Tax parameters
-    shown are scheduled values under current law that Congress may change, and Medicare premium rules are set annually by
-    CMS and may change. Future-year tax and IRMAA figures are inflation-indexed approximations, not published tables.
-    Roth conversions are generally irrevocable. Past performance does not guarantee future results.</div>`;
+    <div class="disc"><b>IMPORTANT DISCLOSURE:</b> This analysis is provided for informational and financial
+    planning purposes only and is based on the information, assumptions, tax rates and laws in effect at the
+    time the analysis is prepared. Results are estimates and may change based on actual income, deductions,
+    investment performance, tax law changes or other circumstances. The analysis is not intended to provide,
+    and should not be relied upon as, legal or tax advice, and does not guarantee any particular tax or
+    financial outcome. Roth conversions may result in current income tax liability and may impact Medicare
+    premiums, taxation of Social Security benefits, tax credits, deductions and other financial considerations.
+    Clients should review any proposed Roth conversion with their qualified tax professional before taking
+    action. The Retirement Solution, LLC does not provide legal or tax advice.</div>`;
 }
 function saveScenario(){
   const fields={}, checks={};
